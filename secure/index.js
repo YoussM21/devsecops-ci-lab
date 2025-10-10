@@ -2,7 +2,6 @@ import express from 'express';
 import helmet from 'helmet';
 import morgan from 'morgan';
 import compression from 'compression';
-import cookieParser from 'cookie-parser';
 import { z } from 'zod';
 
 const app = express();
@@ -17,7 +16,6 @@ app.use(helmet({
 app.use(compression());
 app.use(morgan('combined'));
 app.use(express.json({ limit: '100kb' }));
-app.use(cookieParser());
 
 // secure cookie example
 app.get('/login-sim', (req, res) => {

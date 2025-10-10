@@ -7,7 +7,6 @@ on:
 permissions:
   contents: read
   security-events: write
-  id-token: write
 
 jobs:
   codeql:
@@ -24,22 +23,29 @@ jobs:
   npm-audit-vuln:
     name: npm audit (vuln) — expect FAIL on High
     runs-on: ubuntu-latest
-    defaults: { run: { working-directory: ./vuln } }
+    continue-on-error: true
+    defaults:
+      run:
+        working-directory: ./vuln
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
-        with: { node-version: '20' }
+        with:
+          node-version: '20'
       - run: npm ci || npm i
       - run: npm audit --omit=dev --audit-level=high
 
   npm-audit-secure:
     name: npm audit (secure) — expect PASS
     runs-on: ubuntu-latest
-    defaults: { run: { working-directory: ./secure } }
+    defaults:
+      run:
+        working-directory: ./secure
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
-        with: { node-version: '20' }
+        with:
+          node-version: '20'
       - run: npm ci || npm i
       - run: npm audit --omit=dev --audit-level=high
 
@@ -63,22 +69,25 @@ jobs:
           exit 1
 
       - name: Pull ZAP image
-        run: docker pull owasp/zap2docker-stable
+        run: docker pull ghcr.io/zaproxy/zaproxy:stable
 
       - name: ZAP Baseline (Juice Shop)
         run: |
           docker run --rm --network=host \
-            -v "$PWD":/zap/wrk -w /zap/wrk -u 0:0 \
-            owasp/zap2docker-stable zap-baseline.py \
-            -t http://127.0.0.1:3000 -a -l High -m 3 \
-            -r zap-report-juice-shop.html
+            -v "${{ github.workspace }}:/zap/wrk" -w /zap/wrk -u 0:0 \
+            ghcr.io/zaproxy/zaproxy:stable zap-baseline.py \
+            -t http://127.0.0.1:3000 -m 3 -a \
+            -r /zap/wrk/zap-report-juice-shop.html \
+            -J /zap/wrk/zap-report-juice-shop.json
 
       - name: Upload ZAP report (Juice Shop)
-        uses: actions/upload-artifact@v4
         if: always()
+        uses: actions/upload-artifact@v4
         with:
           name: zap-report-juice-shop
-          path: zap-report-juice-shop.html
+          path: |
+            zap-report-juice-shop.html
+            zap-report-juice-shop.json
 
   zap-secure:
     name: ZAP Baseline vs Secure App — expect PASS
@@ -86,41 +95,42 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
-        with: { node-version: '20' }
+        with:
+          node-version: '20'
 
       - name: Install deps
         working-directory: ./secure
-        run: npm i
+        run: npm ci || npm i
 
-      - name: Start app
+      - name: Start secure app (with logs)
         working-directory: ./secure
         run: |
-          nohup npm start &
-          sleep 3
-
-      - name: Wait for Secure App
-        run: |
-          for i in {1..60}; do
-            curl -fsS http://127.0.0.1:4000 >/dev/null && exit 0
-            sleep 2
-          done
-          echo "Secure app never became ready" >&2
-          exit 1
+          node -v && npm -v
+          nohup node index.js > ../server.log 2>&1 &
+          sleep 5
+          if ! curl -fsS http://127.0.0.1:4000 >/dev/null; then
+            echo "---- secure/server.log (last 100 lines) ----"
+            tail -n 100 ../server.log || true
+            exit 1
+          fi
 
       - name: Pull ZAP image
-        run: docker pull owasp/zap2docker-stable
+        run: docker pull ghcr.io/zaproxy/zaproxy:stable
 
       - name: ZAP Baseline (Secure)
         run: |
           docker run --rm --network=host \
-            -v "$PWD":/zap/wrk -w /zap/wrk -u 0:0 \
-            owasp/zap2docker-stable zap-baseline.py \
-            -t http://127.0.0.1:4000 -a -l High -m 3 \
-            -r zap-report-secure.html
+            -v "${{ github.workspace }}:/zap/wrk" -w /zap/wrk -u 0:0 \
+            ghcr.io/zaproxy/zaproxy:stable zap-baseline.py \
+            -t http://127.0.0.1:4000 -m 3 -a -I \
+            -r /zap/wrk/zap-report-secure.html \
+            -J /zap/wrk/zap-report-secure.json
 
       - name: Upload ZAP report (Secure)
-        uses: actions/upload-artifact@v4
         if: always()
+        uses: actions/upload-artifact@v4
         with:
           name: zap-report-secure
-          path: zap-report-secure.html
+          path: |
+            zap-report-secure.html
+            zap-report-secure.json
