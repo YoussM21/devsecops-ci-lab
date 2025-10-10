@@ -1,0 +1,12 @@
+{
+  "name": "vuln-app",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": { "start": "node index.js" },
+  "dependencies": {
+    "express": "4.16.0",
+    "lodash": "4.17.10",
+    "minimist": "0.0.8"
+  }
+}

@@ -1,0 +1,4 @@
+- npm audit (/vuln): High/Critical before: ___ → after: ___ (expected: failing)
+- npm audit (/secure): High/Critical before: ___ → after: **0**
+- ZAP (Juice Shop): High: ___   ZAP (Secure): High: **0**
+- CodeQL: alerts before: ___ → after: ___

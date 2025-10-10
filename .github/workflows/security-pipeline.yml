@@ -1,0 +1,93 @@
+name: security-pipeline
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+  security-events: write
+
+jobs:
+  codeql:
+    name: CodeQL (SAST)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: github/codeql-action/init@v3
+        with:
+          languages: javascript
+      - uses: github/codeql-action/autobuild@v3
+      - uses: github/codeql-action/analyze@v3
+
+  npm-audit-vuln:
+    name: npm audit (vuln) — expect FAIL on High
+    runs-on: ubuntu-latest
+    defaults: { run: { working-directory: ./vuln } }
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: '20' }
+      - run: npm ci || npm i
+      - run: npm audit --omit=dev --audit-level=high
+
+  npm-audit-secure:
+    name: npm audit (secure) — expect PASS
+    runs-on: ubuntu-latest
+    defaults: { run: { working-directory: ./secure } }
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: '20' }
+      - run: npm ci || npm i
+      - run: npm audit --omit=dev --audit-level=high
+
+  zap-juice-shop:
+    name: ZAP Baseline vs Juice Shop — expect FAIL
+    runs-on: ubuntu-latest
+    services:
+      juice:
+        image: bkimminich/juice-shop
+        ports: ["3000:3000"]
+    steps:
+      - uses: actions/checkout@v4
+      - name: ZAP Baseline Scan
+        uses: zaproxy/action-baseline@v0.10.0
+        with:
+          target: 'http://localhost:3000'
+          fail_action: true
+          cmd_options: '-a -l High -m 3'
+      - name: Upload ZAP report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: zap-report-juice-shop
+          path: report_html.html
+
+  zap-secure:
+    name: ZAP Baseline vs Secure App — expect PASS
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: '20' }
+      - name: Install deps
+        working-directory: ./secure
+        run: npm i
+      - name: Start app
+        working-directory: ./secure
+        run: |
+          nohup npm start &
+          sleep 3
+      - name: ZAP Baseline Scan
+        uses: zaproxy/action-baseline@v0.10.0
+        with:
+          target: 'http://localhost:4000'
+          fail_action: true
+          cmd_options: '-a -l High -m 3'
+      - name: Upload ZAP report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: zap-report-secure
+          path: report_html.html
