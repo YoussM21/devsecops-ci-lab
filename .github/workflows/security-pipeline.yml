@@ -62,19 +62,23 @@ jobs:
           echo "Juice Shop never became ready" >&2
           exit 1
 
-      - name: ZAP Baseline Scan (Juice Shop)
-        uses: zaproxy/action-baseline@v0.10.0
-        with:
-          target: 'http://localhost:3000'
-          fail_action: true
-          cmd_options: '-a -l High -m 3'
+      - name: Pull ZAP image
+        run: docker pull owasp/zap2docker-stable
+
+      - name: ZAP Baseline (Juice Shop)
+        run: |
+          docker run --rm --network=host \
+            -v "$PWD":/zap/wrk -w /zap/wrk -u 0:0 \
+            owasp/zap2docker-stable zap-baseline.py \
+            -t http://127.0.0.1:3000 -a -l High -m 3 \
+            -r zap-report-juice-shop.html
 
       - name: Upload ZAP report (Juice Shop)
-        if: always()
         uses: actions/upload-artifact@v4
+        if: always()
         with:
           name: zap-report-juice-shop
-          path: report_html.html
+          path: zap-report-juice-shop.html
 
   zap-secure:
     name: ZAP Baseline vs Secure App — expect PASS
@@ -92,7 +96,7 @@ jobs:
         working-directory: ./secure
         run: |
           nohup npm start &
-          sleep 2
+          sleep 3
 
       - name: Wait for Secure App
         run: |
@@ -103,16 +107,20 @@ jobs:
           echo "Secure app never became ready" >&2
           exit 1
 
-      - name: ZAP Baseline Scan (Secure)
-        uses: zaproxy/action-baseline@v0.10.0
-        with:
-          target: 'http://localhost:4000'
-          fail_action: true
-          cmd_options: '-a -l High -m 3'
+      - name: Pull ZAP image
+        run: docker pull owasp/zap2docker-stable
+
+      - name: ZAP Baseline (Secure)
+        run: |
+          docker run --rm --network=host \
+            -v "$PWD":/zap/wrk -w /zap/wrk -u 0:0 \
+            owasp/zap2docker-stable zap-baseline.py \
+            -t http://127.0.0.1:4000 -a -l High -m 3 \
+            -r zap-report-secure.html
 
       - name: Upload ZAP report (Secure)
-        if: always()
         uses: actions/upload-artifact@v4
+        if: always()
         with:
           name: zap-report-secure
-          path: report_html.html
+          path: zap-report-secure.html
