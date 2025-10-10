@@ -88,6 +88,13 @@ jobs:
           path: |
             zap-report-juice-shop.html
             zap-report-juice-shop.json
+      
+      - name: Copy ZAP report out (Juice Shop)
+        if: always()
+        run: |
+          docker cp $(docker ps -alq):/zap/wrk/zap-report-juice-shop.html ./zap-report-juice-shop.html || true
+          docker cp $(docker ps -alq):/zap/wrk/zap-report-juice-shop.json ./zap-report-juice-shop.json || true
+
 
   zap-secure:
     name: ZAP Baseline vs Secure App — expect PASS
@@ -134,3 +141,9 @@ jobs:
           path: |
             zap-report-secure.html
             zap-report-secure.json
+
+      - name: Copy ZAP report out (Juice Shop)
+        if: always()
+        run: |
+          docker cp $(docker ps -alq):/zap/wrk/zap-report-juice-shop.html ./zap-report-juice-shop.html || true
+          docker cp $(docker ps -alq):/zap/wrk/zap-report-juice-shop.json ./zap-report-juice-shop.json || true
