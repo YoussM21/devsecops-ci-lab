@@ -23,6 +23,7 @@ jobs:
   npm-audit-vuln:
     name: npm audit (vuln) — expect FAIL on High
     runs-on: ubuntu-latest
+    # Keep the overall workflow green while still demonstrating the failing gate
     continue-on-error: true
     defaults:
       run:
@@ -80,6 +81,12 @@ jobs:
             -r /zap/wrk/zap-report-juice-shop.html \
             -J /zap/wrk/zap-report-juice-shop.json
 
+      - name: Verify & list outputs
+        if: always()
+        run: |
+          echo "Workspace: ${{ github.workspace }}"
+          ls -lah
+
       - name: Upload ZAP report (Juice Shop)
         if: always()
         uses: actions/upload-artifact@v4
@@ -88,13 +95,6 @@ jobs:
           path: |
             zap-report-juice-shop.html
             zap-report-juice-shop.json
-      
-      - name: Copy ZAP report out (Juice Shop)
-        if: always()
-        run: |
-          docker cp $(docker ps -alq):/zap/wrk/zap-report-juice-shop.html ./zap-report-juice-shop.html || true
-          docker cp $(docker ps -alq):/zap/wrk/zap-report-juice-shop.json ./zap-report-juice-shop.json || true
-
 
   zap-secure:
     name: ZAP Baseline vs Secure App — expect PASS
@@ -133,6 +133,12 @@ jobs:
             -r /zap/wrk/zap-report-secure.html \
             -J /zap/wrk/zap-report-secure.json
 
+      - name: Verify & list outputs
+        if: always()
+        run: |
+          echo "Workspace: ${{ github.workspace }}"
+          ls -lah
+
       - name: Upload ZAP report (Secure)
         if: always()
         uses: actions/upload-artifact@v4
@@ -141,9 +147,3 @@ jobs:
           path: |
             zap-report-secure.html
             zap-report-secure.json
-
-      - name: Copy ZAP report out (Juice Shop)
-        if: always()
-        run: |
-          docker cp $(docker ps -alq):/zap/wrk/zap-report-juice-shop.html ./zap-report-juice-shop.html || true
-          docker cp $(docker ps -alq):/zap/wrk/zap-report-juice-shop.json ./zap-report-juice-shop.json || true
