@@ -78,8 +78,8 @@ jobs:
             -v "${{ github.workspace }}:/zap/wrk" -w /zap/wrk -u 0:0 \
             ghcr.io/zaproxy/zaproxy:stable zap-baseline.py \
             -t http://127.0.0.1:3000 -m 3 -a \
-            -r /zap/wrk/zap-report-juice-shop.html \
-            -J /zap/wrk/zap-report-juice-shop.json
+            -r zap-report-juice-shop.html \
+            -J zap-report-juice-shop.json
 
       - name: Verify & list outputs
         if: always()
@@ -95,6 +95,7 @@ jobs:
           path: |
             zap-report-juice-shop.html
             zap-report-juice-shop.json
+
 
   zap-secure:
     name: ZAP Baseline vs Secure App — expect PASS
@@ -130,8 +131,8 @@ jobs:
             -v "${{ github.workspace }}:/zap/wrk" -w /zap/wrk -u 0:0 \
             ghcr.io/zaproxy/zaproxy:stable zap-baseline.py \
             -t http://127.0.0.1:4000 -m 3 -a -I \
-            -r /zap/wrk/zap-report-secure.html \
-            -J /zap/wrk/zap-report-secure.json
+            -r zap-report-secure.html \
+            -J zap-report-secure.json
 
       - name: Verify & list outputs
         if: always()
