@@ -81,6 +81,6 @@ The pipeline automatically runs on every `push` or `pull_request` event and exec
 
 ## 📸 Visual Results
 🔴 Vulnerable App (Juice Shop)
-<p align="center"> <img src="docs/zap-juice-report.png" width="700" alt="ZAP Juice Shop Report"> </p>
+<p align="center"> <img src="docs/Screenshot 2025-10-16 at 6.10.48 PM.png" width="700" alt="ZAP Juice Shop Report"> </p>
 🟢 Secure App
-<p align="center"> <img src="docs/zap-secure-report.png" width="700" alt="ZAP Secure Report"> </p>
+<p align="center"> <img src="docs/Screenshot 2025-10-16 at 6.11.20 PM.png" width="700" alt="ZAP Secure Report"> </p>
